@@ -43,3 +43,12 @@ foreach($csvArr as $record){\
   $book->author = $record['Authors'];
   $book->save();
 }
+
+//#run up till here then run these to populate Authors
+//#note this only works because each book only has 1 author at the moment
+
+foreach($csvArr as $record){\
+  $author = new App\Author;
+  $author->name = $record['Authors'];
+  $author->save();
+}
