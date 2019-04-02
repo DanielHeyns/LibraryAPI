@@ -41,6 +41,5 @@ foreach($csvArr as $record){\
   $book->pub = $record['Publisher'];
   $book->image_path = $record['Image'];
   $book->author = $record['Authors'];
-  $book->subscription = false;
   $book->save();
 }
