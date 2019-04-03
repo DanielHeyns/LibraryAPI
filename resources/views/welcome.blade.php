@@ -1,99 +1,213 @@
-<!doctype html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
-    <head>
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
+<html>
+  <Title>Home</Title>
+  <head>
+    <title>Home</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+  </head>
 
-        <title>Laravel</title>
+  <body>
+    <form>
+      Search By ISBN: <input id='isbnSearchField' type='text'>
+      <button id='isbnSearch'>Submit</button>
+      <br/><br/>
+      <button id='showAuthors'>See All Authors</button>
+      <button id='showBooks'>See All Books</button>
+    </form>
 
-        <!-- Fonts -->
-        <link href="https://fonts.googleapis.com/css?family=Nunito:200,600" rel="stylesheet">
+    <h1 id='title'>All Books</h1>
 
-        <!-- Styles -->
-        <style>
-            html, body {
-                background-color: #fff;
-                color: #636b6f;
-                font-family: 'Nunito', sans-serif;
-                font-weight: 200;
-                height: 100vh;
-                margin: 0;
-            }
+    <div id='authors'></div>
+    <div id='books'></div>
 
-            .full-height {
-                height: 100vh;
-            }
 
-            .flex-center {
-                align-items: center;
-                display: flex;
-                justify-content: center;
-            }
+    <script>
+      function getBookByISBN(isbn) {
+        $url = '/api/books/' + isbn.toString();
+        $.ajax({
+            type: 'GET',
+            url: $url,
+            success: function(data) {
+              data.data = [data.data];
+              populateBooks(data);
+            },
+            error: function(XMLHttpRequest, textStatus, errorThrown) {
+              alert('No book with the ISBN: ' + isbn + ' was found');
+            },
+        });
+      };
 
-            .position-ref {
-                position: relative;
-            }
+      function searchByISBN(isbn) {
+        $('#showAuthors').show();
+        $('#books').show();
+        $('#authors').hide();
+        $('#showBooks').show();
+        document.getElementById('books').innerHTML = '';
+        document.getElementById('title').innerHTML = 'ISBN Search Result';
 
-            .top-right {
-                position: absolute;
-                right: 10px;
-                top: 18px;
-            }
+        getBookByISBN(isbn);
+      };
 
-            .content {
-                text-align: center;
-            }
+      function getAuthors(handleData) {
+        $.ajax({
+            type: 'GET',
+            url: '/api/authors',
+            success: function(data) {
+              handleData(data);
+            },
+        });
+      };
 
-            .title {
-                font-size: 84px;
-            }
+      function showAuthors() {
+        $('#showAuthors').hide();
+        $('#books').hide();
+        $('#authors').show();
+        $('#showBooks').show();
+        document.getElementById('authors').innerHTML = '';
+        document.getElementById('title').innerHTML = 'All Authors';
 
-            .links > a {
-                color: #636b6f;
-                padding: 0 25px;
-                font-size: 13px;
-                font-weight: 600;
-                letter-spacing: .1rem;
-                text-decoration: none;
-                text-transform: uppercase;
-            }
+        getAuthors(function(output) {
+          let data = output.data,
+              authorTable = document.createElement('table'),
+              headers = document.createElement('tr'),
+              name = document.createElement('td'),
+              id = document.createElement('td');
 
-            .m-b-md {
-                margin-bottom: 30px;
-            }
-        </style>
-    </head>
-    <body>
-        <div class="flex-center position-ref full-height">
-            @if (Route::has('login'))
-                <div class="top-right links">
-                    @auth
-                        <a href="{{ url('/home') }}">Home</a>
-                    @else
-                        <a href="{{ route('login') }}">Login</a>
+          authorTable.border = '2px';
 
-                        @if (Route::has('register'))
-                            <a href="{{ route('register') }}">Register</a>
-                        @endif
-                    @endauth
-                </div>
-            @endif
+          name.innerHTML = '<b>Author Name</b>';
+          id.innerHTML = '<b>ID</b>';
 
-            <div class="content">
-                <div class="title m-b-md">
-                    Laravel
-                </div>
+          headers.appendChild(name);
+          headers.appendChild(id);
+          authorTable.appendChild(headers);
 
-                <div class="links">
-                    <a href="https://laravel.com/docs">Docs</a>
-                    <a href="https://laracasts.com">Laracasts</a>
-                    <a href="https://laravel-news.com">News</a>
-                    <a href="https://blog.laravel.com">Blog</a>
-                    <a href="https://nova.laravel.com">Nova</a>
-                    <a href="https://forge.laravel.com">Forge</a>
-                    <a href="https://github.com/laravel/laravel">GitHub</a>
-                </div>
-            </div>
-        </div>
-    </body>
+          for (var i = 0; i < data.length; i++) {
+            let newAuthor = document.createElement('tr'),
+                name = document.createElement('td'),
+                id = document.createElement('td');
+
+            name.innerHTML = data[i].name;
+            id.innerHTML = data[i].id;
+
+            newAuthor.appendChild(name);
+            newAuthor.appendChild(id);
+            authorTable.appendChild(newAuthor);
+          };
+
+          document.getElementById('authors').appendChild(authorTable);
+        });
+      };
+
+      function getBooks() {
+        $('#showBooks').hide();
+        $('#authors').hide();
+        $('#books').show();
+        $('#showAuthors').show();
+        document.getElementById('books').innerHTML = '';
+        document.getElementById('title').innerHTML = 'All Books';
+
+        $.ajax({
+            type: 'GET',
+            url: '/api/books',
+            success: function(data) {
+              populateBooks(data);
+            },
+        });
+      };
+
+
+      function populateBooks(output) {
+        let data = output.data,
+            bookTable = document.createElement('table'),
+            headers = document.createElement('tr'),
+            name = document.createElement('td'),
+            author = document.createElement('td'),
+            isbn = document.createElement('td'),
+            id = document.createElement('td'),
+            pub = document.createElement('td'),
+            pubYear = document.createElement('td');
+
+        bookTable.style.width = '100%';
+        bookTable.border = '2px';
+        headers.align = 'center';
+
+        name.innerHTML = '<b>Title</b>';
+        author.innerHTML = '<b>Author</b>';
+        isbn.innerHTML = '<b>ISBN</b>';
+        id.innerHTML = '<b>ID</b>';
+        pub.innerHTML = '<b>Publisher</b>';
+        pubYear.innerHTML = '<b>Published Year</b>';
+
+        headers.appendChild(name);
+        headers.appendChild(author);
+        headers.appendChild(isbn);
+        headers.appendChild(id);
+        headers.appendChild(pub);
+        headers.appendChild(pubYear);
+
+        bookTable.appendChild(headers);
+
+        for (var i = 0; i < data.length; i++) {
+          let newBook = document.createElement('tr'),
+              name = document.createElement('td'),
+              author = document.createElement('td'),
+              isbn = document.createElement('td'),
+              id = document.createElement('td'),
+              pub = document.createElement('td'),
+              pubYear = document.createElement('td'),
+              image = document.createElement('a');
+
+          newBook.align = 'center';
+          name.style.width = '40%';
+          author.style.width = '20%';
+          isbn.style.width = '10%';
+          id.style.width = '5%';
+          pub.style.width = '20%';
+          pubYear.style.width = '5%';
+
+          image.href = data[i].image_path;
+          image.innerHTML = data[i].name;
+          author.innerHTML = data[i].author;
+          isbn.innerHTML = data[i].ISBN;
+          id.innerHTML = data[i].id;
+          pub.innerHTML = data[i].pub;
+          pubYear.innerHTML = data[i].pub_year;
+
+          name.appendChild(image);
+          newBook.appendChild(name);
+          newBook.appendChild(author);
+          newBook.appendChild(isbn);
+          newBook.appendChild(id);
+          newBook.appendChild(pub);
+          newBook.appendChild(pubYear)
+
+          bookTable.appendChild(newBook);
+        };
+
+        document.getElementById('books').appendChild(bookTable);
+      };
+
+
+      $(document).ready(function() {
+        //On initial load, show all books
+        getBooks();
+
+        $('#isbnSearch').click(function(e) {
+          //This prevents the page from reloading on click
+          e.preventDefault();
+          searchByISBN($('#isbnSearchField').val());
+        });
+
+        $('#showAuthors').click(function(e) {
+          e.preventDefault();
+          showAuthors();
+        });
+
+        $('#showBooks').click(function(e) {
+          e.preventDefault();
+          getBooks();
+        });
+      });
+    </script>
+  </body>
 </html>
